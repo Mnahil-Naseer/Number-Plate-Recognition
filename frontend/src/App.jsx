@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios";  // Make sure axios is installed
 
 export default function App() {
   const [image, setImage] = useState(null);
@@ -17,18 +18,29 @@ export default function App() {
     setPlateType("");
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!image) return;
     setLoading(true);
-    setTimeout(() => {
-      const fakeResult = Math.random() > 0.5 ? "GOV-5678" : "ABC-1234";
-      const isGov = /GOV|GOVT|G-/.test(fakeResult.toUpperCase());
-      const type = isGov ? "Government Plate" : "Private Plate";
-      setResult(fakeResult);
+    const formData = new FormData();
+    formData.append("file", image);
+
+    try {
+      const response = await axios.post("http://127.0.0.1:5000/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const { plate, type } = response.data;
+      setResult(plate);
       setPlateType(type);
-      setHistory((prev) => [...prev, { plate: fakeResult, type }]);
+      setHistory((prev) => [...prev, { plate, type }]);
+    } catch (error) {
+      console.error("Error during upload:", error);
+      setResult("Error: Unable to process image.");
+    } finally {
       setLoading(false);
-    }, 2000);
+    }
   };
 
   const handleReset = () => {
@@ -39,17 +51,7 @@ export default function App() {
   };
 
   return (
-    <div
-      className="min-h-screen w-full flex flex-col items-center justify-start"
-      style={{
-        backgroundImage:
-          "repeating-linear-gradient(0deg, #f5f5f5, #f5f5f5 24px, #ddd 25px), repeating-linear-gradient(90deg, #f5f5f5, #f5f5f5 24px, #ddd 25px)",
-        backgroundSize: "20px 20px",
-        backgroundAttachment: "fixed",
-        position: "relative",
-      }}
-    >
-      {/* Navbar */}
+    <div className="min-h-screen w-full flex flex-col items-center justify-start">
       <nav className="w-full bg-blue-900 text-white p-4 flex justify-between items-center shadow-md">
         <h1 className="text-xl font-bold">🚗 PlateDetect</h1>
         <div className="space-x-6 text-sm">
@@ -71,7 +73,6 @@ export default function App() {
         </div>
       </nav>
 
-      {/* History Side Panel */}
       {showHistory && (
         <div className="fixed right-0 top-14 h-full w-72 bg-white shadow-lg rounded-lg border-2 border-gray-500 z-20 p-4 overflow-y-auto">
           <h3 className="text-md font-bold mb-2 text-gray-700">📜 Recognition History</h3>
@@ -83,7 +84,7 @@ export default function App() {
               >
                 <span>{item.plate}</span>
                 <span
-                  className={`$ {
+                  className={`${
                     item.type === "Government Plate" ? "text-red-600" : "text-blue-600"
                   }`}
                 >
@@ -95,7 +96,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Upload Card */}
       <div className="bg-white shadow-2xl rounded-xl p-6 w-full max-w-md text-center mt-10 border-2 border-gray-400 relative z-10">
         {preview && (
           <button

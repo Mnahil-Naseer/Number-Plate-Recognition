@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pakistani Plate Detection</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .result { margin-top: 20px; }
+        .plate { border: 2px solid #333; margin: 10px 0; padding: 10px; }
+        .pakistani { background-color: #e6ffe6; }
+        .unknown { background-color: #ffe6e6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pakistani Number Plate Detection</h1>
+        <form method="post" enctype="multipart/form-data" action="/uploads">
+            <input type="file" name="file" accept="image/*" required>
+            <button type="submit">Upload & Detect</button>
+        </form>
+        
+        {% if original %}
+        <div class="result">
+            <h2>Results</h2>
+            <div>
+                <h3>Original Image</h3>
+                <img src="{{ url_for('static', filename='uploads/' + original) }}" width="500">
+            </div>
+            <div>
+                <h3>Processed Image</h3>
+                <img src="{{ url_for('static', filename='uploads/' + processed) }}" width="500">
+            </div>
+            
+            {% for result in results %}
+            <div class="plate {% if result.is_pakistani %}pakistani{% else %}unknown{% endif %}">
+                <p><strong>Plate Text:</strong> {{ result.text }}</p>
+                <p><strong>Status:</strong> 
+                    {% if result.is_pakistani %}
+                        ✅ Pakistani Vehicle ({{ result.province }})
+                    {% else %}
+                        ❌ Not a recognized Pakistani plate
+                    {% endif %}
+                </p>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
